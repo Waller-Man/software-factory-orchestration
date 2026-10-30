@@ -1,0 +1,50 @@
+# Dependencies, compiler output and local release staging
+node_modules/
+/lib/
+/artifacts/
+/dist/
+/build/
+/release/
+/releases/
+*.tsbuildinfo
+
+# Tests, task materials and local runtime state
+/test-results/
+/coverage/
+/playwright-report/
+/outputs/
+/.dsh/
+/.cache/
+/.npm/
+*.log
+
+# Credentials and machine-specific configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+.npmrc
+!.npmrc.example
+credentials.json
+credentials.*.json
+connection.private.json
+cordis.local.yml
+cordis.patch.local.yml
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Upload distribution archives as remote Releases attachments
+*.tgz
+*.zip
+
+# Editor and operating-system files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~

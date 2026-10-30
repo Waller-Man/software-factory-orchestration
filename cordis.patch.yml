@@ -1,0 +1,13 @@
+- insert:
+    - id: sf-orchestration
+      name: '@software-factory/orchestration'
+    - id: sf-orchestration-preset
+      name: '@deepseek-ai/dsh-agent-preset'
+      config:
+        id: sf-agent-orchestration
+        name: Agent 编排
+        description: 根据数据库选择单个版本，人工审核后执行
+        order: 7
+        plugins:
+          - id: sf-selection-rules
+            name: '@software-factory/orchestration/preset'
