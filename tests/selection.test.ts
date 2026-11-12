@@ -161,6 +161,7 @@ test('read candidates, recommend, human replaces, actual Runtime execution, repe
     };
     for (let i = 0; i < 20; i++) {
       const current = await get('sf_runtime_get_run', { runId: run.runId });
+      assert.equal(current.sourceSessionId, agent.id); assert.equal(current.executionSessionId, worker.id);
       if (current.status === 'completed') { assert.equal(current.result.text, '请处理这段真实输入:2'); break; }
       await get('sf_runtime_wait_run', { runId: run.runId, waitMs: 100 });
     }

@@ -237,7 +237,7 @@ export class SelectionBackend {
     ensure(row.source.messageId === sourceOf(this.agent(row.sessionId)).messageId, 'STALE_REVIEW', '用户已补充新任务，请等待新一轮推荐');
   }
   private async parameters(row: Selection, request: { versionId: string; input?: ObjectValue; fileId?: string }): Promise<ReviewPlan> {
-      const candidate = this.candidate(row, request.versionId), worker = await this.worker(row);
+      const candidate = this.candidate(row, request.versionId), worker = await this.worker(row), model = selectedModel(this.ctx, worker);
       const contract = await this.call<ToolContract>(worker, 'sf_runtime_get_tool_contract', { toolId: candidate.version.properties.dsh_ref });
       const draft = row.parameterDrafts?.[request.versionId], fileId = request.fileId ?? draft?.fileId;
       const file = fileId === '' ? undefined : fileId ? row.source.files.find(f => f.attachmentId === fileId) : row.source.files.length === 1 ? row.source.files[0] : undefined;
@@ -252,7 +252,6 @@ export class SelectionBackend {
       if (fields?.path && row.source.files.length > 1 && fileId === undefined) issues.push('有多个输入附件，请在聊天中说明使用哪份文档');
       if (row.source.files.length && !selectedFile && !Object.keys(input).length) issues.push('请在聊天中提供业务输入，或让助手绑定已上传的文档');
       issues.push(...validateJsonSchemaValue(contract.inputSchema, input, 'input'));
-      const model = selectedModel(this.ctx, worker);
       const llm = this.ctx.get('llm');
       const caption = model ? (await llm?.listModels(model.provider).catch(() => []))?.find(m => m.id === model.model)?.name ?? model.model : undefined;
       const effort = model?.reasoningEffort ? (await llm?.resolveModelInfo(model.provider, model.model).catch(() => undefined))?.reasoning?.efforts.find(item => item.id === model.reasoningEffort)?.name : undefined;
@@ -293,7 +292,7 @@ export class SelectionBackend {
       ensure(v && digest(v.properties) === digest(c.version.properties), 'DATA_CHANGED', '版本资料已变化，请重新读取并审核');
       const logical = await this.gateway().read({ kind: 'node', vertexId: c.agent.vertexId }, this.life.signal);
       ensure(logical.ok && 'kind' in logical.data && logical.data.kind === 'node' && digest(logical.data.node.properties) === digest(c.agent.properties), 'DATA_CHANGED', '逻辑 Agent 资料已变化，请重新读取并审核');
-      const worker = await this.worker(row), contract = await this.call<ToolContract>(worker, 'sf_runtime_get_tool_contract', { toolId: plan.contract.toolId });
+      const worker = await this.worker(row), contract = await this.call<ToolContract>(worker, 'sf_runtime_get_tool_contract', { toolId: plan.contract.toolId, ...(plan.model ? { model: plan.model } : {}) });
       ensure(digest(contract) === digest(plan.contract), 'CONTRACT_CHANGED', '真实 Tool 契约已变化，请重新核对');
       const selected = selectedModel(this.ctx, worker);
       ensure(digest(selected ? { provider: selected.provider, model: selected.model, ...(selected.reasoningEffort ? { reasoningEffort: String(selected.reasoningEffort) } : {}) } : null) === digest(plan.model ?? null), 'MODEL_CHANGED', '执行模型已变化，请重新核对');
@@ -309,7 +308,12 @@ export class SelectionBackend {
             ensure(!prepared.isError, 'INPUT_PREPARATION_FAILED', prepared.isError ? prepared.error.message : '附件准备失败');
           } finally { remove(); }
         }
-        const run = await this.call<{ runId: string }>(worker, 'sf_runtime_run_tool', { toolId: plan.contract.toolId, input: plan.input, ...(plan.model ? { model: plan.model } : {}) });
+        // Source identity comes from the approved server record, never model arguments.
+        const runtime = this.ctx.get('sfRuntime') as unknown as { bindRunSource?: (execution: Agent, source: Agent) => Promise<() => void> } | undefined;
+        const unbind = runtime?.bindRunSource ? await runtime.bindRunSource(worker, await this.sourceAgent(row)) : undefined;
+        let run: { runId: string };
+        try { run = await this.call<{ runId: string }>(worker, 'sf_runtime_run_tool', { toolId: plan.contract.toolId, input: plan.input, ...(plan.model ? { model: plan.model } : {}) }); }
+        finally { unbind?.(); }
         row.runId = run.runId; row.runtimeSessionId = worker.id; row.status = 'started'; await this.store.put(row.id, row);
         return { runId: run.runId, runtimeSessionId: worker.id };
       } catch (e) {

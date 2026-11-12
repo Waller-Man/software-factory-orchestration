@@ -6,7 +6,12 @@
 
 **必须接入并安装、启用配套的[软件工厂 WebUI](https://github.com/Waller-Man/software-factory-webui)，才能使用完整的编排界面。** 侧栏入口、审核卡和执行卡由 WebUI 提供，仅安装本后端不会显示这些界面。
 
-当前插件版本为 `0.1.0`，包名为 `@software-factory/orchestration`。
+当前插件版本为 `0.1.2`，包名为 `@software-factory/orchestration`。本版配套 Runtime `0.4.0` 和 WebUI `0.1.2`，继续使用 DSH 原生模型／思考强度选择。
+
+## 0.1.2 更新说明
+
+- 在确认启动前检查业务声明的模型协议；不匹配时提示重新选择，不隐藏候选或自动切换模型。旧 SDK 业务入口保持可用。
+- 在确认启动时，按服务端选择记录将执行会话绑定到来源主聊天，让运行卡中的人工交互答案回到对应任务。来源不接受 AI 任意填写；旧 Runtime 缺少此能力时沿用原启动方式。候选发现、人工审核和模型选择流程保持不变。
 
 ## 功能
 
@@ -34,8 +39,8 @@
 | DSH 和模型配置 | 原生网页应可正常登录；在 DSH 设置中配置可用模型和聊天默认模型。 |
 | HugeGraph 及软件工厂数据 | 准备已有能力树、Agent、版本和字段数据；本插件不自动建库、迁移或恢复数据库。 |
 | Gateway | 包版本声明为 `^0.1.1`，提供能力树与候选查询；按其文档配置数据库连接。 |
-| Runtime | 包版本声明为 `^0.1.0`，使用当前配套构建，管理真实业务入口、任务、模型和产物。 |
-| 统一 WebUI | 提供“Agent 编排”侧栏、审核卡和执行卡，仅安装编排后端不会产生这些界面。 |
+| Runtime | 本版配套 `0.4.0`，管理真实业务入口、任务、模型、人工交互和产物。 |
+| 统一 WebUI | 本版配套 `0.1.2`，提供“Agent 编排”侧栏、审核卡和执行卡，仅安装编排后端不会产生这些界面。 |
 | 业务插件 | 至少一个通过 Run SDK 登记入口的插件，数据库中需有相应版本；Python、OCR 等依赖按业务插件说明提前准备。 |
 
 统一 WebUI 还将 Gateway、Manage 声明为 peerDependencies，安装器可能校验这些依赖，按 WebUI README 准备。Manage 提供注册管理功能，不属于编排后端的数据库写入通道。
@@ -55,7 +60,7 @@
 
 ### 2. 下载并解压编排插件
 
-从仓库的 [Releases／发布](https://github.com/Waller-Man/software-factory-orchestration/releases) 下载 `software-factory-orchestration-0.1.0.zip`，解压到长期保留的目录，例如：
+从仓库的 [Releases／发布](https://github.com/Waller-Man/software-factory-orchestration/releases) 下载 `software-factory-orchestration-0.1.2.zip`，解压到长期保留的目录，例如：
 
 ```text
 D:\DSH-Plugins\software-factory-orchestration\
